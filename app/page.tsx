@@ -4,7 +4,7 @@ import { BackgroundLines } from "@/components/ui/background-lines";
 import { FlipWords } from "@/components/ui/flip-words";
 import Image from "next/image";
 
-const words = ["EventMinder", "prabh", "rashi", "sneha"];
+const words = ["EventMinder", "START","YOUR", "CAREER", "WITH", "US!"];
 
 export default function Home() {
   return (
