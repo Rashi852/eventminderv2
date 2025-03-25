@@ -72,6 +72,35 @@ export function ParticipantForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 min-w-[300px]">
+        <div className="flex gap-2">
+
+        <FormField
+          control={form.control}
+          name="firstname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>First Name</FormLabel>
+              <FormControl>
+                <Input placeholder="abc@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+          />
+        <FormField
+          control={form.control}
+          name="lastname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Last Name</FormLabel>
+              <FormControl>
+                <Input placeholder="abc@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+          />
+          </div>
         <FormField
           control={form.control}
           name="email"
@@ -95,9 +124,9 @@ export function ParticipantForm() {
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
-                      variant={"outline"}
+                      variant={"ghost"}
                       className={cn(
-                        "w-[240px] pl-3 text-left font-normal",
+                        "bg-transparent",
                         !field.value && "text-muted-foreground"
                       )}
                     >
@@ -122,9 +151,6 @@ export function ParticipantForm() {
                   />
                 </PopoverContent>
               </Popover>
-              <FormDescription>
-                Your date of birth is used to calculate your age.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

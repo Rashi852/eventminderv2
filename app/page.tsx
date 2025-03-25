@@ -5,11 +5,7 @@ import { FlipWords } from "@/components/ui/flip-words";
 import { LogInIcon, UserRoundPlus } from "lucide-react";
 import Link from "next/link";
 
-<<<<<<< HEAD
 const words = ["EventMinder", "START","YOUR", "CAREER", "WITH", "US!"];
-=======
-const words = ["Efficiency", "Precision", "Simplicity", "Control", "Ease"];
->>>>>>> 7d5197cb88b114155e60eace632c8dff143b18bb
 
 export default function Home() {
   return (
