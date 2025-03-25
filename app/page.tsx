@@ -1,4 +1,4 @@
-import { fontdinerSwanky } from "@/components/fonts";
+import { fontdinerSwanky } from "@/components/assets/fonts";
 import { BackgroundLines } from "@/components/ui/background-lines";
 import { Button } from "@/components/ui/button";
 import { FlipWords } from "@/components/ui/flip-words";
@@ -8,6 +8,7 @@ import Link from "next/link";
 const words = ["EventMinder", "START","YOUR", "CAREER", "WITH", "US!"];
 
 export default function Home() {
+
   return (
     <div className="flex flex-1 flex-col">
     <main className="relative">

@@ -1,41 +1,31 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { useState } from "react"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {cn} from '@/lib/utils'
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { EyeIcon, EyeOffIcon } from "lucide-react"
+import axios from "axios"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 const formSchema = z.object({
     email: z.string().email({
         message: "Please enter a valid email address.",
     }),
-    department: z.string().nonempty("Department is required"),
-    firstname: z.string().nonempty("First name is required"),
-    lastname: z.string().nonempty("Last name is required"),
-    dob: z.date({
-      required_error: "Date of birth is required"
-    }),
+    fname:z.string().nonempty("First name is required"),
+    lname:z.string().nonempty("last name is required"),
+    dob:z.date(),
     password: z.string()
         .min(6, "Password must be at least 6 characters long")
         .regex(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, "Password must contain at least one letter, one number, and one special character"),
@@ -51,26 +41,42 @@ const formSchema = z.object({
 })
 
 export function ParticipantForm() {
+  const router = useRouter()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstname:"",
-      lastname:"",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      department: "",
+        fname:"",
+        lname:"",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        dob: new Date(),
     },
   })
 
   const [showPassword, setShowPassword] = useState(false)
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    
+    try{
+      await axios.post("/api/auth/register", {role:"participant",...values})
+      router.push('/register/verify')
+      router.refresh()
+    } catch (error) {
+      if(axios.isAxiosError(error) &&  error.response?.status === 400){
+        toast.error("User already exists")
+        router.push('/login')
+        router.refresh()
+      } else {
+        toast.error("Something went wrong, try again")
+        router.refresh()
+      }    
+    }
   }
+
+
   return (
     <Form {...form}>
+<<<<<<< HEAD
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 min-w-[300px]">
         <div className="flex gap-2">
 
@@ -101,12 +107,40 @@ export function ParticipantForm() {
           )}
           />
           </div>
+=======
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 flex flex-col min-w-[300px]">
+        <div className="flex gap-2">
+          <FormField
+            control={form.control}
+            name="fname"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input placeholder="First Name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lname"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input placeholder="Last Name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+>>>>>>> e96c94fb4738e1ffc80dfae9a10aa9677ac72034
         <FormField
           control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input placeholder="abc@example.com" {...field} />
               </FormControl>
@@ -118,6 +152,7 @@ export function ParticipantForm() {
           control={form.control}
           name="dob"
           render={({ field }) => (
+<<<<<<< HEAD
             <FormItem className="flex flex-col">
               <FormLabel>Date of birth</FormLabel>
               <Popover>
@@ -159,10 +194,16 @@ export function ParticipantForm() {
           control={form.control}
           name="department"
           render={({ field }) => (
+=======
+>>>>>>> e96c94fb4738e1ffc80dfae9a10aa9677ac72034
             <FormItem>
-              <FormLabel>Department</FormLabel>
               <FormControl>
-                <Input placeholder="Computer applications" {...field} />
+                <DatePicker
+                  startYear={1900}
+                  endYear={new Date().getFullYear()}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -173,7 +214,6 @@ export function ParticipantForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
               <FormControl className="relative">
                 <div>
                 <Input
@@ -203,7 +243,6 @@ export function ParticipantForm() {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
               <FormControl className="relative">
                 <div>
                 <Input
