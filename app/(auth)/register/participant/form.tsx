@@ -76,38 +76,6 @@ export function ParticipantForm() {
 
   return (
     <Form {...form}>
-<<<<<<< HEAD
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 min-w-[300px]">
-        <div className="flex gap-2">
-
-        <FormField
-          control={form.control}
-          name="firstname"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>First Name</FormLabel>
-              <FormControl>
-                <Input placeholder="abc@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-          />
-        <FormField
-          control={form.control}
-          name="lastname"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Last Name</FormLabel>
-              <FormControl>
-                <Input placeholder="abc@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-          />
-          </div>
-=======
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 flex flex-col min-w-[300px]">
         <div className="flex gap-2">
           <FormField
@@ -135,7 +103,6 @@ export function ParticipantForm() {
             )}
           />
         </div>
->>>>>>> e96c94fb4738e1ffc80dfae9a10aa9677ac72034
         <FormField
           control={form.control}
           name="email"
@@ -152,50 +119,6 @@ export function ParticipantForm() {
           control={form.control}
           name="dob"
           render={({ field }) => (
-<<<<<<< HEAD
-            <FormItem className="flex flex-col">
-              <FormLabel>Date of birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"ghost"}
-                      className={cn(
-                        "bg-transparent",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="department"
-          render={({ field }) => (
-=======
->>>>>>> e96c94fb4738e1ffc80dfae9a10aa9677ac72034
             <FormItem>
               <FormControl>
                 <DatePicker
