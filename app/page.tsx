@@ -10,12 +10,12 @@ const words = ["EventMinder", "START","YOUR", "CAREER", "WITH", "US!"];
 export default function Home() {
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1  my-background-image flex-col">
       <Header/>
     <main className="">
       <div className="overflow-clip flex items-center justify-center flex-col py-32 ">
     <Vortex
-      backgroundColor="#00000000"
+      backgroundColor="#002a4505"
       className="flex items-center justify-center flex-col "
       particleCount={300}
       baseRadius={3}
