@@ -1,5 +1,4 @@
 import { fontdinerSwanky } from "@/components/assets/fonts";
-import Footer from "@/components/assets/footer";
 import Header from "@/components/assets/header";
 import { FlipWords } from "@/components/ui/flip-words";
 import { Vortex } from "@/components/ui/vortex";
