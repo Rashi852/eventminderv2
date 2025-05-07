@@ -1,45 +1,48 @@
 "use client"
+
+
+
 import { useEffect, useRef, useState } from 'react';
 import * as faceapi from 'face-api.js';
 import axios from 'axios';
-import { BrowserQRCodeReader } from '@zxing/browser';
+import { BrowserQRCodeReader, IScannerControls } from '@zxing/browser';
 
+// ... (keep interfaces and other constants)
 interface FaceResult {
   name: string;
   confidence: number;
 }
 
-const FaceRecognizerAndQr = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+const FaceRecognizerAndQr = (eventid: { eventid: string }) => {
+  const faceVideoRef = useRef<HTMLVideoElement>(null);
+  const qrVideoRef = useRef<HTMLVideoElement>(null);
+  const faceCanvasRef = useRef<HTMLCanvasElement>(null);
   const [faceMatcher, setFaceMatcher] = useState<faceapi.FaceMatcher | null>(null);
   const [results, setResults] = useState<FaceResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [qrContent, setQrContent] = useState<string | null>(null);
-  const [mode, setMode] = useState<'face' | 'qr'>('face');
-  const codeReaderRef = useRef<BrowserQRCodeReader>(null);
+  const [mode, setMode] = useState<'face' | 'qr'>('qr');
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const scannerControlsRef = useRef<IScannerControls | null>(null);
+  const faceIntervalId = useRef<NodeJS.Timeout | null>(null);
 
   // Load models and initialize
   useEffect(() => {
     const initialize = async () => {
       try {
-        // Initialize face-api.js models
         await Promise.all([
           faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
           faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
           faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
         ]);
 
-        // Initialize QR code reader
-        codeReaderRef.current = new BrowserQRCodeReader();
-
-        // Load face descriptors
-        const faces = await axios.get("/api/register").then((data) => data.data);
-        const labeledDescriptors = faces.map((face: { id: string; descriptor: number[] }) =>
+        const data = await axios.post("/api/moderator/face", eventid).then((res) => res.data);
+        const labeledDescriptors = data.res.map((face: any) =>
           new faceapi.LabeledFaceDescriptors(
-            `user_${face.id}`,
-            [new Float32Array(face.descriptor)]
+            `user_${face.attendee.fname}`,
+            [new Float32Array(face.attendee.Face)]
           )
         );
         setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors));
@@ -50,85 +53,90 @@ const FaceRecognizerAndQr = () => {
         setLoading(false);
       }
     };
-
     initialize();
-  }, []);
+  }, [eventid]);
 
-  // Start camera and detection loop
+  // Handle mode changes
   useEffect(() => {
-    if (!videoRef.current || loading) return;
- if (!faceMatcher || !videoRef.current) return;
-
-    let stream: MediaStream;
-    let intervalId: NodeJS.Timeout;
-
-    const startDetection = async () => {
+    const initCamera = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        videoRef.current!.srcObject = stream;
-
-        intervalId = setInterval(async () => {
-          if (!videoRef.current || !canvasRef.current) return;
-
-          if (mode === 'face') {
-            // Face recognition logic
-            const detections = await faceapi
-              .detectAllFaces(videoRef.current)
-              .withFaceLandmarks()
-              .withFaceDescriptors();
-
-            if (faceMatcher) {
-              const results = detections.map(face => {
-                const bestMatch = faceMatcher.findBestMatch(face.descriptor);
-                return {
-                  name: bestMatch.label,
-                  confidence: Math.round((1 - bestMatch.distance) * 100)
-                };
-              });
-              setResults(results);
-              updateFaceCanvas(detections, results);
-            }
-          } else {
-            // QR code scanning logic
-            try {
-              const result = await new Promise<string | null>((resolve, reject) => {
-                codeReaderRef.current!.decodeFromVideoElement(videoRef.current!, (result, error) => {
-                  if (error) {
-                    reject(error);
-                  } else {
-                    resolve(result?.getText() || null);
-                  }
-                });
-              });
-              if (result) setQrContent(result);
-            } catch (error) {
-                console.log(error);
-              // Quietly handle no QR code found
-            }
-          }
-        }, 100);
+        if (!stream) {
+          const newStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
+          });
+          setStream(newStream);
+        }
       } catch (err) {
         console.error(err);
         setError('Camera access denied');
       }
     };
 
-    startDetection();
-
-    return () => {
-      clearInterval(intervalId);
-      stream?.getTracks().forEach(track => track.stop());
+    const cleanupPreviousMode = () => {
+      if (faceIntervalId.current) clearInterval(faceIntervalId.current);
+      if (scannerControlsRef.current) scannerControlsRef.current.stop();
+      setQrContent(null);
+      setResults([]);
     };
-  }, [faceMatcher, mode, loading]);
+
+    cleanupPreviousMode();
+    initCamera();
+
+    return () => cleanupPreviousMode();
+  }, [mode, stream]);
+
+  // Start face detection
+  useEffect(() => {
+    if (mode === 'face' && stream && faceMatcher && faceVideoRef.current) {
+      faceVideoRef.current.srcObject = stream;
+
+      faceIntervalId.current = setInterval(async () => {
+        const detections = await faceapi
+          .detectAllFaces(faceVideoRef.current!)
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+
+        const results = detections.map(face => {
+          const bestMatch = faceMatcher.findBestMatch(face.descriptor);
+          return {
+            name: bestMatch.label,
+            confidence: Math.round((1 - bestMatch.distance) * 100)
+          };
+        });
+        
+        setResults(results);
+        updateFaceCanvas(detections, results);
+      }, 100);
+    }
+  }, [mode, stream, faceMatcher]);
+
+  // Start QR scanning
+  useEffect(() => {
+    if (mode === 'qr' && stream && qrVideoRef.current) {
+      qrVideoRef.current.srcObject = stream;
+      const codeReader = new BrowserQRCodeReader();
+
+      codeReader.decodeFromVideoElement(
+        qrVideoRef.current,
+        (result, error) => {
+          if (result) setQrContent(result.getText());
+        }
+      ).then((controls) => {
+        scannerControlsRef.current = controls;
+      }).catch((err) => {
+        console.error('Error initializing QR scanner:', err);
+      });
+    }
+  }, [mode, stream]);
 
   const updateFaceCanvas = (
     detections: faceapi.WithFaceDescriptor<faceapi.WithFaceLandmarks<{ detection: faceapi.FaceDetection; }, faceapi.FaceLandmarks68>>[],
     results: FaceResult[]
   ) => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!faceVideoRef.current || !faceCanvasRef.current) return;
 
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
+    const canvas = faceCanvasRef.current;
+    const video = faceVideoRef.current;
     const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
 
     faceapi.matchDimensions(canvas, displaySize);
@@ -165,30 +173,32 @@ const FaceRecognizerAndQr = () => {
         </button>
       </div>
 
-      <div style={{ position: 'relative' }}>
-        <video ref={videoRef} autoPlay muted playsInline />
-        <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0 }} />
-      </div>
-
       {mode === 'face' ? (
-        <div className="results">
-          <h3>Recognized Faces:</h3>
-          <ul>
-            {results.map((result, i) => (
-              <li key={i}>
-                {result.name} - {result.confidence}% confidence
-              </li>
-            ))}
-          </ul>
+        <div style={{ position: 'relative' }}>
+          <video ref={faceVideoRef} autoPlay muted playsInline />
+          <canvas ref={faceCanvasRef} style={{ position: 'absolute', top: 0, left: 0 }} />
+          <div className="results">
+            <h3>Recognized Faces:</h3>
+            <ul>
+              {results.map((result, i) => (
+                <li key={i}>
+                  {result.name} - {result.confidence}% confidence
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       ) : (
-        <div className="qr-results">
-          <h3>QR Code Content:</h3>
-          {qrContent ? (
-            <div className="qr-content">{qrContent}</div>
-          ) : (
-            <div className="qr-prompt">Scanning QR code...</div>
-          )}
+        <div style={{ position: 'relative' }}>
+          <video ref={qrVideoRef} autoPlay muted playsInline />
+          <div className="qr-results">
+            <h3>QR Code Content:</h3>
+            {qrContent ? (
+              <div className="qr-content">{qrContent}</div>
+            ) : (
+              <div className="qr-prompt">Scanning QR code...</div>
+            )}
+          </div>
         </div>
       )}
     </div>

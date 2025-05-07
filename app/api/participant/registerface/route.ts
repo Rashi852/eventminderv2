@@ -2,14 +2,6 @@ import { MyPrisma } from '@/prisma/prisma';
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
-// interface RegisterRequest {
-//   descriptor: Float32Array[];
-// }
-export const GET = async () => {
-  const data = MyPrisma.participant.findMany({
-  })
-  return NextResponse.json(data)
-}
 
 export async function POST(req: NextRequest) {
   const data = await req.json();
